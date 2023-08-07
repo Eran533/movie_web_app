@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.container {
+    text-align: center;
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    width: 80%;
+    max-width: 500px;
+}
+
+h1 {
+    margin-bottom: 20px;
+    color: #007bff;
+}
+
+.question {
+    margin: 20px 0;
+    font-size: 18px;
+}
+
+.answer-choices {
+    margin-top: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+input[type="radio"] {
+    margin-right: 5px;
+    vertical-align: middle;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+#result {
+    font-weight: bold;
+    margin-top: 15px;
+    font-size: 18px;
+    color: #333;
+}
+    </style>
+    <title>Trivia Game</title>
+</head>
+<body>
+<div class="container">
+    <h1>Movie Trivia Game</h1>
+    <div class="question">
+        <p id="question-text">{{ question }} ?</p>
+    </div>
+    <form method="post" action="{{ url_for('check_answer', user_id=user_id) }}">
+    <input type="hidden" name="question" value="{{ question }}">
+    <div class="answer-choices">
+        {% for choice in answers %}
+            <label>
+                <input type="radio" name="answer" value="{{ choice.split(') ')[1] }}" required>
+                {{ choice }}
+            </label><br>
+        {% endfor %}
+    </div>
+    <button type="submit" id="submit-answer">Submit</button>
+</form>
+    <p id="result">{{ result }}</p>
+</div>
+</body>
+</html>

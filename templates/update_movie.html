@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    form {
+      max-width: 400px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 10px;
+      color: #555;
+      text-align: center;
+      margin-top: 10px;
+      color: #4F4F4F;
+    }
+
+    input[type="text"],
+    input[type="title"],
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+
+    textarea {
+      height: 100px;
+    }
+
+    input[type="submit"],
+    .link-box {
+      display: inline-block;
+      padding: 10px 20px;
+      color: #fff;
+      background-color: #3498db;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+      box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    input[type="submit"] {
+    background-color: #4CAF50;
+    }
+    .link-box:hover {
+      background-color: #2980b9;
+    }
+     input[type="submit"]:hover {
+      background-color: #45a049;
+    }
+  </style>
+ <title>Update movie</title>
+</head>
+<body>
+  <h1>Update movie</h1>
+  <form method="post" action="">
+    <label for="title"><strong>Name:</strong></label>
+    <input type="text" id="title" name="title" required value="{{ movie['title'] }}">
+    <label for="year"><strong>Year:</strong></label>
+    <input type="text" id="year" name="year" required value="{{ movie['year'] }}">
+    <label for="rating"><strong>Rating:</strong></label>
+    <input type="text" id="rating" name="rating" required value="{{ movie['rating'] }}">
+    <div>
+      <input type="submit" value="Submit">
+    </div>
+    <form action="{{ url_for('user_movies', user_id=user_id) }}">
+      <button class="button" type="submit">My Movies</button>
+    </form>
+  </form>
+</body>
+</html>

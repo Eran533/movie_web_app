@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie app</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <form action="/">
+        <button class="add-movie-button" type="submit">Log out</button>
+    </form>
+    <form action="{{ url_for('edit_profile', user_id=user_id) }}" class="profile-form">
+        <button class="add-movie-button" type="submit">Edit profile</button>
+    </form>
+    <br>
+    <button id="dark-mode-toggle" class="toggle-button">Dark Mode</button>
+    <h1>Welcome to Movie app!</h1>
+    <img src="{{ url_for('static', filename=user['image']) }}" id="profile-image">
+    {% for movie in movies %}
+    <div class="post">
+        <h2>{{ movie["title"] }}</h2>
+        <p><em>Directed by {{ movie["director"] }}</em></p>
+        <p>Release date: {{ movie["year"] }}, Movie rating: {{ movie["rating"] }}</p>
+        <p class="post-image">
+        <a href="{{ url_for('movie_page', user_id=user_id, movie_id=movie['id']) }}" target="_blank" class="movie-link">
+            <img src="{{ movie['poster'] }}" class="poster-image">
+        </a>
+        </p>
+        <div class="country-images">
+            {% for country_img in movie['countries_img'] %}
+            <img src="{{ country_img['country_img'] }}" class="country-image">
+            {% endfor %}
+        </div>
+        <form action="{{ url_for('delete_movie', user_id=user_id, movie_id=movie['id']) }}" method="POST" id="delete-form">
+            <input type="image" src="{{ url_for('static', filename='icons8-delete-30.png') }}" alt="Logo" class="delete-button" onclick="submitForm(event)">
+        </form>
+        <form action="{{ url_for('update_movie', user_id=user_id, movie_id=movie['id']) }}">
+            <input type="image" src="{{ url_for('static', filename='icons8-edit-30.png') }}" alt="Logo" class="update-button" onclick="submitForm(event)">
+        </form>
+        <form action="{{ url_for('movie_user_reviews', user_id=user_id, movie_title=movie['title']) }}">
+            {% set comments = data_manager.get_comments(movie['title']) %}
+            <button class="movie_user_reviews" type="submit">Users reviews({{ comments|length }})</button>
+        </form>
+        <form action="{{ url_for('app_review_movie', user_id=user_id, movie_id=movie['id']) }}" method="POST" id="app-review-form">
+            <button class="add-movie-button" type="submit" onclick="submitReviewForm(event)">Movie app review!</button>
+        </form>
+        {% if movie.get('review') %}
+            <p class="review-text">{{ movie['review'] }}</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+    <form action="{{ url_for('add_movie', user_id=user_id) }}">
+        <button class="add-movie-button" type="submit">Add Movie</button>
+    </form>
+    <form action="{{ url_for('trivia_game', user_id=user_id) }}">
+        <button class="game-button" type="submit">🎮 Trivia Game</button>
+    </form>
+    <div id="loading-message" style="display: none;">
+        <div id="loading-message-text">Loading, please wait...</div>
+    </div>
+    <script>
+        function submitReviewForm(event) {
+            event.preventDefault();
+
+            document.getElementById("loading-message").style.display = "flex";
+
+            setTimeout(function() {
+                event.target.closest('form').submit();
+            }, 500); // Adjust the delay time as needed
+        }
+
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const body = document.body;
+
+    darkModeToggle.addEventListener('click', () => {
+        body.classList.toggle('dark-mode');
+
+        // Change button text based on dark mode status
+        if (body.classList.contains('dark-mode')) {
+            darkModeToggle.textContent = 'Light Mode';
+            localStorage.setItem('darkMode', 'enabled');
+        } else {
+            darkModeToggle.textContent = 'Dark Mode';
+            localStorage.setItem('darkMode', 'disabled');
+        }
+    });
+
+    // Check user's preference on page load
+    const userPreference = localStorage.getItem('darkMode');
+    if (userPreference === 'enabled') {
+        body.classList.add('dark-mode');
+        darkModeToggle.textContent = 'Light Mode'; // Set button text on page load
+    }
+    </script>
+</body>
+</html>

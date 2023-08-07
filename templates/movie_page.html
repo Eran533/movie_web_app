@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+        /* Reset some default styles */
+body, h1, p {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box; /* Ensure padding and border are included in element's total width/height */
+}
+
+/* Set a background color and text color */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+    line-height: 1.6; /* Improve readability with slightly increased line height */
+}
+
+/* Center the content on the page */
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh; /* Use min-height to ensure the container takes at least viewport height */
+}
+
+/* Style the movie details box */
+.movie-details {
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    max-width: 80%; /* Limit the width of the box for better readability */
+    position: relative; /* For positioning the country images */
+}
+
+/* Add some spacing between elements */
+.movie-details h1 {
+    margin-bottom: 10px;
+    color: #333; /* Darken the heading color a bit for contrast */
+}
+
+.movie-details p {
+    margin-bottom: 10px; /* Slightly increase spacing between paragraphs */
+    color: #666; /* Use a slightly lighter color for paragraphs */
+}
+
+/* Style the genre tags */
+.movie-details p strong {
+    color: #333; /* Darken the genre label color */
+}
+
+.movie-details .genres {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.movie-details .genre {
+    margin: 4px;
+    padding: 6px 10px;
+    background-color: #f2f2f2;
+    border-radius: 20px;
+    font-size: 12px;
+    color: #666;
+}
+
+/* Style the poster and country images */
+.poster-image {
+    max-width: 60%;
+    height: auto;
+    margin-top: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.country-image {
+    max-width: 30px;
+    height: auto;
+    margin: 0 5px;
+    opacity: 0.7;
+}
+
+.country-image:hover {
+    opacity: 1;
+}
+.movie_user_reviews {
+            position: relative; /* Change to relative positioning */
+            margin-top: 20px; /* Add some spacing between movie details and button */
+            background-color: #000000; /* Change the background color to black */
+            color: #ffffff;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .movie_user_reviews:hover {
+            background-color: #333333; /* Change the hover background color to a darker shade of black */
+        }
+    </style>
+    <title>Movie Details</title>
+</head>
+<body>
+    <div class="container">
+        <div class="movie-details">
+            <h1>{{ movie.title }}</h1>
+            <p><strong>Year : </strong> {{ movie["year"] }}</p>
+            <p><strong>Rating : </strong> {{ movie["rating"] }}</p>
+            <p><strong>Genres : {% for genre in genres %} </strong> {{ genre["genre"] }}</p>
+            {% endfor %}
+            <p><strong>Director :</strong> {{ movie["director"] }}</p>
+            <img src="{{ movie['poster'] }}" class="poster-image">
+            <form action="{{ url_for('movie_user_reviews', user_id=user_id, movie_title=movie['title']) }}">
+            {% set comments = data_manager.get_comments(movie['title']) %}
+            <button class="movie_user_reviews" type="submit">Users reviews({{ comments|length }})</button>
+            </form>
+            <div class="country-images">
+            {% for country_img in movie['countries_img'] %}
+            <img src="{{ country_img['country_img'] }}" class="country-image">
+            {% endfor %}
+            </div>
+        {% if movie.get('review') %}
+            <p class="review-text">{{ movie['review'] }}</p>
+        {% endif %}
+        </div>
+    </div>
+    <div id="loading-message" style="display: none;">
+        <div id="loading-message-text">Loading, please wait...</div>
+    </div>
+<script>
+        function submitReviewForm(event) {
+            event.preventDefault();
+
+            document.getElementById("loading-message").style.display = "flex";
+
+            setTimeout(function() {
+                event.target.closest('form').submit();
+            }, 500); // Adjust the delay time as needed
+        }
+    </script>
+</body>
+</html>

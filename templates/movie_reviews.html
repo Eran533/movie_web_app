@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reviews Page</title>
+  <style>
+      body {
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+}
+p a {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+  }
+
+header {
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  padding: 1rem;
+}
+
+main {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  padding: 2rem;
+}
+
+.review {
+  width: 300px;
+  margin: 20px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.review img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  margin-bottom: 10px;
+}
+
+.review h2 {
+  font-size: 1.2rem;
+  margin-bottom: 5px;
+}
+
+.rating {
+  color: #FFD700; /* Gold color for star rating */
+  font-size: 1rem;
+  margin-bottom: 10px;
+}
+
+.comment {
+  font-size: 0.9rem;
+}
+
+@media only screen and (max-width: 600px) {
+  .review {
+    width: 100%;
+  }
+}
+
+/* Form Styles */
+
+.add-review {
+  text-align: center;
+  margin-top: 30px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.add-review h2 {
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+form label {
+  font-size: 1.1rem;
+  margin-bottom: 5px;
+}
+
+form input,
+form textarea {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 1rem;
+}
+
+form textarea {
+  resize: vertical;
+}
+
+form button {
+  padding: 10px 20px;
+  background-color: #333;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+form button:hover {
+  background-color: #555;
+}
+
+form button:active {
+  background-color: #222;
+}
+
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Reviews</h1>
+  </header>
+  <main>
+    {% for review in reviews %}
+    <section class="review">
+      <img src="{{ url_for('static', filename=review['img']) }}" id="profile-image">
+      <h2>{{ review["user_name"] }}</h2>
+      <p>{{ review["comment"] }}</p>
+    </section>
+    {% endfor %}
+  </main>
+ <section class="add-review">
+    <h2>Add Your Review</h2>
+    <form method="post" action="">
+      <label for="name">Name:</label>
+      <input type="text" id="name" name="name" required value="{{ user['username'] }}">
+
+      <label for="rating">Rating:</label>
+      <input type="number" id="rating" name="rating" min="1" max="10" step="0.5" required>
+
+      <label for="comment">Comment:</label>
+      <textarea id="comment" name="comment" rows="4" required></textarea>
+
+      <button type="submit">Submit Review</button>
+    </form>
+  </section>
+    <p><a href="{{ url_for('user_movies', user_id=user['id']) }}">back to movies</a></p>
+</body>
+</html>

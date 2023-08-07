@@ -1,0 +1,26 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <title>Movie App - Log In</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="static/css/main.css" />
+  </head>
+  <body class="is-preload">
+    <header id="header">
+      <h1>Log In</h1>
+      <p>Welcome back! Please enter your credentials to log in.</p>
+    </header>
+    <form id="login-form" method="post" action="/process_login">
+      <input type="text" name="username" id="username" placeholder="Username" required/>
+      <p></p>
+      <input type="password" name="password" id="password" placeholder="Password" required/>
+        <p></p>
+      <input type="submit" value="Log In" />
+    </form>
+    <form action="/">
+        <button class="add-movie-button" type="submit">Sign Up</button>
+    </form>
+    <script src="static/js/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <title>Movie App</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="static/css/main.css" />
+  </head>
+  <body class="is-preload">
+    <header id="header">
+      <h1>Movie app</h1>
+      <p>Welcome! Movie app here you can explore and discover the wonderful world of movies.</p>
+    </header>
+      {% if error_message %}
+        <p style="color: red;">{{ error_message }}</p>
+        {% endif %}
+    <form id="signup-form" method="post" action="" enctype="multipart/form-data">
+      <input type="text" name="username" id="username" placeholder="Username" required />
+      <input type="email" name="email" id="email" placeholder="Email" required />
+      <input type="password" name="password" id="password" placeholder="Password" required />
+      <input type="password" name="confirm_password" id="confirm_password" placeholder="Confirm Password" required />
+      <p>
+      Profile Image:
+      <input type="file" name="image" id="image" accept="image/*" required />
+      <input type="submit" value="Sign Up" />
+      {% if image_filename %}
+        <img src="{{ image_filename }}" alt="Profile Image" />
+      {% endif %}
+    </form>
+    <form id="login-form" action="/log_in">
+      <input type="submit" value="If you are already a user!" />
+    </form>
+    <script src="static/js/main.js"></script>
+  </body>
+</html>
