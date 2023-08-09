@@ -15,8 +15,8 @@ question = ""
 answer_choices = []
 
 def send_email(email):
-    email_sender = "eranblank533@gmail.com"
-    email_password = "ublgdoroqomwtdbk"
+    email_sender = "movieapp533@gmail.com"
+    email_password = "kqajiawvooxmuasl"
     email_reciver = email
     subject = "Welcome to the movies app!"
     body = """
