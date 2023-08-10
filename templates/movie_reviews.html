@@ -140,6 +140,7 @@ form button:active {
     <section class="review">
       <img src="{{ url_for('static', filename=review['img']) }}" id="profile-image">
       <h2>{{ review["user_name"] }}</h2>
+      <p>{{ review["rating"] }}</p>
       <p>{{ review["comment"] }}</p>
     </section>
     {% endfor %}
