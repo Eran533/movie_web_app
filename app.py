@@ -9,14 +9,20 @@ import smtplib
 from api import api
 import game
 
+app = Flask(__name__)
+db_path = os.path.join(os.path.dirname(__file__), "datamanager", "moviwebapp.db")
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
+data_manager = SQLiteDataManager(app)
+app.register_blueprint(api, url_prefix='/api')
+
 game_q = 0
 score = 0
 question = ""
 answer_choices = []
 
 def send_email(email):
-    email_sender = "eranblank533@gmail.com"
-    email_password = "ublgdoroqomwtdbk"
+    email_sender = "movieapp533@gmail.com"
+    email_password = "kqajiawvooxmuasl"
     email_reciver = email
     subject = "Welcome to the movies app!"
     body = """
@@ -53,12 +59,6 @@ def app_review(movie_title):
     response = requests.post(url, json=payload, headers=headers)
     review_text = response.json()['choices'][0]['message']['content']
     return review_text
-
-app = Flask(__name__)
-db_path = os.path.join(os.path.dirname(__file__), "datamanager", "moviwebapp.db")
-app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
-data_manager = SQLiteDataManager(app)
-app.register_blueprint(api, url_prefix='/api')
 
 @app.errorhandler(404)
 def page_not_found(e):
