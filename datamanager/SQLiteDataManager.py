@@ -1,6 +1,6 @@
 from sqlalchemy.exc import SQLAlchemyError
-from data_models import USER, MOVIES, db, Countries, Reviews, Genre
-from datamanager.dataManager_Interface import DataManagerInterface
+from movie_web_app.data_models import User, Movies, db, Countries, Reviews, Genre
+from movie_web_app.datamanager.dataManager_Interface import DataManagerInterface
 
 class SQLiteDataManager(DataManagerInterface):
     def __init__(self, app):
@@ -9,7 +9,7 @@ class SQLiteDataManager(DataManagerInterface):
             db.init_app(self.app)
 
     def get_all_users(self):
-        all_users = USER.query.all()
+        all_users = User.query.all()
         return [user.to_dict() for user in all_users]
 
     def get_all_countries(self):
@@ -21,7 +21,7 @@ class SQLiteDataManager(DataManagerInterface):
         return [country.to_dict() for country in movie_countries]
 
     def get_user_movies(self, user_id):
-        user_movies = MOVIES.query.filter_by(user_id=user_id).all()
+        user_movies = Movies.query.filter_by(user_id=user_id).all()
         movies_with_reviews = []
         for movie in user_movies:
             movie_data = movie.to_dict()
@@ -31,7 +31,7 @@ class SQLiteDataManager(DataManagerInterface):
 
     def add_movie(self, movie):
         try:
-            new_movie = MOVIES(
+            new_movie = Movies(
                 user_id=movie["user_id"],
                 title=movie['name'],
                 director=movie['director'],
@@ -42,12 +42,9 @@ class SQLiteDataManager(DataManagerInterface):
             )
             db.session.add(new_movie)
             db.session.commit()
-
-            # Handling multiple countries
             if "Countries" in movie:
-                countries_list = movie["Countries"].split(",")  # Split the string into a list of country names
-                countries_img = movie.get("countries_img",
-                                          [])  # Get the country image URLs list (or an empty list if not provided)
+                countries_list = movie["Countries"].split(",")
+                countries_img = movie.get("countries_img", [])
 
                 for country_name, country_img in zip(countries_list, countries_img):
                     new_country = Countries(
@@ -56,14 +53,14 @@ class SQLiteDataManager(DataManagerInterface):
                         country_img=country_img
                     )
                     db.session.add(new_country)
-
+                self.add_genre(new_movie.id, movie)  # Call the add_genre method with the movie_id and genre_data
             db.session.commit()
         except SQLAlchemyError as e:
             db.session.rollback()
             raise e
 
     def update_movie(self, movie_id, movie_data):
-        existing_movie = MOVIES.query.get(movie_id)
+        existing_movie = Movies.query.get(movie_id)
         if existing_movie:
             existing_movie.title = movie_data['title']
             existing_movie.director = movie_data['director']
@@ -75,29 +72,38 @@ class SQLiteDataManager(DataManagerInterface):
         else:
             raise ValueError("Movie with the given ID not found.")
 
+    def get_movie_title(self, movie_id):
+        movie = Movies.query.get(movie_id)
+        return movie.title if movie else None
+
     def delete_movie(self, movie_id):
         try:
-            movie_to_delete = MOVIES.query.get(movie_id)
-            db.session.delete(movie_to_delete)
-            countries_to_delete = Countries.query.filter_by(movie_id=movie_id).all()
-            for country in countries_to_delete:
-                db.session.delete(country)
-            db.session.commit()
+            movie_to_delete = Movies.query.get(movie_id)
+            if movie_to_delete:
+                genres_to_delete = Genre.query.filter_by(movie_id=movie_to_delete.id).all()
+                for genre in genres_to_delete:
+                    db.session.delete(genre)
+                db.session.delete(movie_to_delete)
+                countries_to_delete = Countries.query.filter_by(movie_id=movie_id).all()
+                for country in countries_to_delete:
+                    db.session.delete(country)
+                db.session.commit()
+            else:
+                raise ValueError("Movie with the given ID not found.")
         except SQLAlchemyError as e:
             db.session.rollback()
             raise e
-
     def get_user(self, user_id):
-        user = USER.query.get(user_id)
+        user = User.query.get(user_id)
         return user.to_dict() if user else None
 
     def add_user(self, user):
-        new_user = USER(user_name = user["username"], password = user["password"], user_img = user["image"], email= user["email"])
+        new_user = User(user_name = user["username"], password = user["password"], user_img = user["image"], email= user["email"])
         db.session.add(new_user)
         db.session.commit()
 
     def edit_profile(self, user_id, user_data):
-        existing_user = USER.query.get(user_id)
+        existing_user = User.query.get(user_id)
         if existing_user:
             existing_user.user_name = user_data["username"]
             existing_user.password = user_data["password"]
@@ -106,9 +112,9 @@ class SQLiteDataManager(DataManagerInterface):
         else:
             raise ValueError("Movie with the given ID not found.")
 
-    def movie_app_review(self, movie_id, movie_data):
-        existing_movie = MOVIES.query.get(movie_id)
-        existing_movie.review = movie_data['review']
+    def movie_app_review(self, movie_id, review_data):
+        existing_movie = Movies.query.get(movie_id)
+        existing_movie.review = review_data["review"]
         db.session.commit()
 
     def add_comment(self, comment_data, movie_title, user_id):
@@ -127,16 +133,16 @@ class SQLiteDataManager(DataManagerInterface):
         movie_reviews = Reviews.query.filter_by(movie_title=movie_title).all()
         return [review.to_dict() for review in movie_reviews]
 
-    def add_genre(self, genre_data, movie_title):
+    def add_genre(self, movie_id, genre_data):
         genre_list = genre_data['genre'].split(",")
         for genre in genre_list:
-            new_comment = Genre(
-                movie_title=movie_title,
-                genre= genre
+            new_genre = Genre(
+                movie_id=movie_id,  # Use the provided movie_id
+                genre=genre
             )
-            db.session.add(new_comment)
-            db.session.commit()
+            db.session.add(new_genre)
+        db.session.commit()
 
-    def get_genre(self, movie_title):
-        genres = Genre.query.filter_by(movie_title=movie_title).all()
+    def get_genre(self, movie_id):
+        genres = Genre.query.filter_by(movie_id=movie_id).all()
         return [genre.to_dict() for genre in genres]

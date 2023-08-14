@@ -1,24 +1,22 @@
 import ssl
-import requests
 from flask import Flask, render_template, request, redirect, url_for
-from data_models import db
-from datamanager.SQLiteDataManager import SQLiteDataManager
+from starlette.templating import Jinja2Templates
+from movie_web_app.data_models import db
+from movie_web_app.datamanager.SQLiteDataManager import SQLiteDataManager
 import os
 from email.message import EmailMessage
 import smtplib
-from api import api
-import game
+from movie_web_app.api import api
+from movie_web_app.game import TriviaGame
+import requests
 
 app = Flask(__name__)
+templates = Jinja2Templates(directory="templates")
 db_path = os.path.join(os.path.dirname(__file__), "datamanager", "moviwebapp.db")
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
 data_manager = SQLiteDataManager(app)
 app.register_blueprint(api, url_prefix='/api')
-
-game_q = 0
-score = 0
-question = ""
-answer_choices = []
+game = TriviaGame()
 
 def send_email(email):
     email_sender = "movieapp533@gmail.com"
@@ -37,28 +35,6 @@ def send_email(email):
     with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as smtp:
         smtp.login(email_sender, email_password)
         smtp.sendmail(email_sender, email_reciver, em.as_string())
-
-def app_review(movie_title):
-    url = "https://chatgpt-best-price.p.rapidapi.com/v1/chat/completions"
-
-    payload = {
-        "model": "gpt-3.5-turbo",
-        "messages": [
-            {
-                "role": "user",
-                "content": f"What is your opinion about the film (act like you Film critic)?{movie_title}",
-            }
-        ]
-    }
-    headers = {
-        "content-type": "application/json",
-        "X-RapidAPI-Key": "234f5498c9msh8226e93fd4984d6p11b844jsn286c0f051d2e",
-        "X-RapidAPI-Host": "chatgpt-best-price.p.rapidapi.com"
-    }
-
-    response = requests.post(url, json=payload, headers=headers)
-    review_text = response.json()['choices'][0]['message']['content']
-    return review_text
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -100,49 +76,65 @@ def country_flag(country_name):
             image = country["image"]
     return image
 
+def app_review(movie_title):
+    url = "https://chatgpt-best-price.p.rapidapi.com/v1/chat/completions"
+
+    payload = {
+        "model": "gpt-3.5-turbo",
+        "messages": [
+            {
+                "role": "user",
+                "content": f"What is your opinion about the film (act like you Film critic)?{movie_title}",
+            }
+        ]
+    }
+    headers = {
+        "content-type": "application/json",
+        "X-RapidAPI-Key": "234f5498c9msh8226e93fd4984d6p11b844jsn286c0f051d2e",
+        "X-RapidAPI-Host": "chatgpt-best-price.p.rapidapi.com"
+    }
+
+    response = requests.post(url, json=payload, headers=headers)
+    review_text = response.json()['choices'][0]['message']['content']
+    return review_text
+
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    users = data_manager.get_all_users()
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        email = request.form.get('email')
-        image = request.files.get('image')
-        confirm_password = request.form.get('confirm_password')
-        if password != confirm_password:
-            error_message = "Passwords do not match"
-            return render_template("index.html", error_message=error_message)
-        for account in users:
-            if username.lower() == account["username"].lower() or email.lower() == account["email"].lower():
-                error_message = "Username/Email already exists"
-                return render_template("index.html", error_message=error_message)
-        if not users:
-            new_id = 1
-        else:
-            new_id = max(movie['id'] for movie in users) + 1
-
-        image_filename = f'{username}.png'
-
-        if image:
-            try:
-                image_filename = f'{username}.png'
-                image.save(f'static/{image_filename}')
-            except:
-                error_message = "Failed to save the image file"
-                return render_template("index.html", error_message=error_message)
-
-        new_account = {
-            "id": new_id,
-            "username": username,
-            "email": email,
-            "password": password,
-            "image": image_filename,
-            "movies": []
-        }
-        data_manager.add_user(new_account)
-        send_email(email)
-        return redirect(url_for('log_in'))
-    return render_template("index.html")
+    try:
+        users = data_manager.get_all_users()
+        if request.method == 'POST':
+            username = request.form.get('username')
+            password = request.form.get('password')
+            email = request.form.get('email')
+            image = request.files.get('image')
+            confirm_password = request.form.get('confirm_password')
+            if password != confirm_password:
+                return render_template("index.html", error_message="Passwords do not match")
+            if any(account["username"].lower() == username.lower() or account["email"].lower() == email.lower() for
+                   account in users):
+                return render_template("index.html", error_message="Username/Email already exists")
+            new_id = 1 if not users else max(account['id'] for account in users) + 1
+            image_filename = f'{username}.png'
+            if image:
+                try:
+                    image.save(f'static/{image_filename}')
+                except:
+                    return render_template("index.html", error_message="Failed to save the image file")
+            new_account = {
+                "id": new_id,
+                "username": username,
+                "email": email,
+                "password": password,
+                "image": image_filename,
+                "movies": []
+            }
+            data_manager.add_user(new_account)
+            send_email(email)
+            return redirect(url_for('log_in'))
+        return render_template("index.html")
+    except Exception as e:
+        error_message = str(e)
+        return render_template("error.html", error_message=error_message)
 
 @app.route('/log_in')
 def log_in():
@@ -150,11 +142,7 @@ def log_in():
 
 @app.route('/users/<int:user_id>')
 def user_movies(user_id):
-    global game_q, score, question, answer_choices
-    game_q = 0
-    score = 0
-    question = ""
-    answer_choices = []
+    game.reset_game()
     user = data_manager.get_user(user_id)
     movies = data_manager.get_user_movies(user_id)
     for movie in movies:
@@ -175,34 +163,25 @@ def process_login():
             if username == user['username'] and password == user['password']:
                 user_id = user['id']
                 return redirect(url_for('user_movies', user_id=user_id))
+        error_message = "Incorrect username or password. Please try again."
+        return render_template('log_in.html', error_message=error_message)
     return render_template('log_in.html')
-
 
 @app.route('/users/<int:user_id>/add_movie', methods=['GET', 'POST'])
 def add_movie(user_id):
-    users = data_manager.get_all_users()
-    if request.method == 'POST':
-        for user in users:
-            if user["id"] == user_id:
+    try:
+        users = data_manager.get_all_users()
+        if request.method == 'POST':
+            user = next((user for user in users if user["id"] == user_id), None)
+            if user:
                 name_input = request.form.get('name')
                 movie_json = api(name_input)
                 if movie_json.get('Error'):
-                    error_message = movie_json.get('Error')
-                    return render_template('error.html', error_message=error_message)
-
+                    return render_template('error.html', error_message=movie_json.get('Error'))
                 countries = movie_json['Country']
-                countries_img = []
-                if "," in countries:
-                    for country in countries.split(", "):
-                        countries_img.append(country_flag(country))
-                else:
-                    countries_img.append(country_flag(countries))
+                countries_img = [country_flag(country) for country in countries.split(", ")]
                 movies = data_manager.get_user_movies(user_id)
-                if not movies:
-                    new_id = 1
-                else:
-                    new_id = max(movie['id'] for movie in movies) + 1
-
+                new_id = 1 if not movies else max(movie['id'] for movie in movies) + 1
                 movie_dict = {
                     'id': new_id,
                     'user_id': user_id,
@@ -213,16 +192,15 @@ def add_movie(user_id):
                     'Poster': movie_json['Poster'],
                     'Countries': movie_json['Country'],
                     'countries_img': countries_img,
+                    'genre': movie_json['Genre'],
                     'review': ""
                 }
-
                 data_manager.add_movie(movie_dict)
-                genre_dict = {
-                    'genre': movie_json['Genre']
-                }
-                data_manager.add_genre(genre_dict, movie_json['Title'])
                 return redirect(url_for('user_movies', user_id=user_id))
-    return render_template('add_movie.html', user_id=user_id)
+        return render_template('add_movie.html', user_id=user_id)
+    except Exception as e:
+        error_message = str(e)
+        return render_template('error.html', error_message=error_message)
 
 @app.route('/users/<int:user_id>/delete_movie/<int:movie_id>', methods=['POST'])
 def delete_movie(user_id, movie_id):
@@ -240,38 +218,30 @@ def delete_movie(user_id, movie_id):
 @app.route('/users/<int:user_id>/update/<int:movie_id>', methods=['GET', 'POST'])
 def update_movie(user_id, movie_id):
     if request.method == "POST":
-        users = data_manager.get_all_users()
-        for user in users:
-            if user["id"] == user_id:
-                movies = data_manager.get_user_movies(user_id)
-                for movie in movies:
-                    if movie["id"] == movie_id:
-                        title = request.form.get("title")
-                        year = request.form.get("year")
-                        rating = request.form.get("rating")
-                        movie_data = {
-                            'id': movie_id,
-                            'title': title,
-                            'director': movie["director"],
-                            'year': year,
-                            'rating': rating,
-                            'poster': movie["poster"],
-                            'review': movie["review"]
-                        }
-                        data_manager.update_movie(movie_id, movie_data)
-                        break
-                break
-        return redirect(url_for('user_movies', user_id=user_id))
-    else:
-        movies = data_manager.get_user_movies(user_id)
-        if movies is None:
-            return render_template('404.html'), 404
+        user = next((user for user in data_manager.get_all_users() if user["id"] == user_id), None)
+        if user:
+            movie = next((movie for movie in data_manager.get_user_movies(user_id) if movie["id"] == movie_id), None)
+            if movie:
+                movie_data = {
+                    'id': movie_id,
+                    'title': request.form.get("title"),
+                    'director': movie["director"],
+                    'year': request.form.get("year"),
+                    'rating': request.form.get("rating"),
+                    'poster': movie["poster"],
+                    'review': movie["review"]
+                }
+                data_manager.update_movie(movie_id, movie_data)
+                return redirect(url_for('user_movies', user_id=user_id))
 
-        for movie in movies:
-            if movie["id"] == movie_id:
-                return render_template('update_movie.html', user_id=user_id, movie=movie)
-
+    movies = data_manager.get_user_movies(user_id)
+    if movies is None:
         return render_template('404.html'), 404
+
+    movie = next((movie for movie in movies if movie["id"] == movie_id), None)
+    if movie:
+        return render_template('update_movie.html', user_id=user_id, movie=movie)
+    return render_template('404.html'), 404
 
 @app.route('/users/<int:user_id>/app_review_movie/<int:movie_id>', methods=['POST'])
 def app_review_movie(user_id, movie_id):
@@ -291,35 +261,36 @@ def app_review_movie(user_id, movie_id):
 
 @app.route('/users/<int:user_id>/edit_profile', methods=['GET', 'POST'])
 def edit_profile(user_id):
-    if request.method == "POST":
-        users = data_manager.get_all_users()
-        for user in users:
-            if user["id"] == user_id:
-                image = request.files.get('image')
-                image_filename = f'{user["username"]}.png'
-                if image:
+    try:
+        if request.method == "POST":
+            users = data_manager.get_all_users()
+            for user in users:
+                if user["id"] == user_id:
+                    image = request.files.get('image')
                     image_filename = f'{user["username"]}.png'
-                    image.save(f'static/{image_filename}')
-                user_data = {"username": request.form.get("username"), "password": request.form.get("password"),
-                             "image": image_filename}
-                data_manager.edit_profile(user_id, user_data)
-                break
-        return redirect(url_for('user_movies', user_id=user_id))
-    user = data_manager.get_user(user_id)
-    return render_template('edit_profile.html', user=user)
+                    if image:
+                        image_filename = f'{user["username"]}.png'
+                        image.save(f'static/{image_filename}')
+                    user_data = {"username": request.form.get("username"), "password": request.form.get("password"),
+                                 "image": image_filename}
+                    data_manager.edit_profile(user_id, user_data)
+                    break
+            return redirect(url_for('user_movies', user_id=user_id))
+
+        user = data_manager.get_user(user_id)
+        return render_template('edit_profile.html', user=user)
+
+    except Exception as e:
+        error_message = str(e)
+        return render_template('error.html', error_message=error_message), 500
 
 @app.route('/users/<int:user_id>/movie_user_reviews/<string:movie_title>', methods=['GET', 'POST'])
 def movie_user_reviews(user_id, movie_title):
-    if request.method == 'POST':
-        users = data_manager.get_all_users()
-        for user in users:
-            if user["id"] == user_id:
-                movie_id = None
-                user_movies = data_manager.get_user_movies(user_id)
-                for movie in user_movies:
-                    if movie["title"] == movie_title:
-                        movie_id = movie["id"]
-                        break
+    try:
+        if request.method == 'POST':
+            user = next((user for user in data_manager.get_all_users() if user["id"] == user_id), None)
+            if user:
+                movie_id = next((movie["id"] for movie in data_manager.get_user_movies(user_id) if movie["title"] == movie_title), None)
                 if movie_id is not None:
                     rating = float(request.form.get('rating'))
                     comment = request.form.get('comment')
@@ -331,67 +302,63 @@ def movie_user_reviews(user_id, movie_title):
                     }
                     data_manager.add_comment(comment_data, movie_title, user_id)
                     return redirect(url_for('movie_user_reviews', user_id=user_id, movie_title=movie_title))
-        return render_template('404.html'), 404
+            return render_template('404.html'), 404
 
-    user = data_manager.get_user(user_id)
-    user_movies = data_manager.get_user_movies(user_id)
-    movie_data = None
-    for movie in user_movies:
-        if movie["title"] == movie_title:
-            movie_data = movie
-            break
-    if movie_data is not None:
-        movie_reviews = data_manager.get_comments(movie_data["title"])
-        return render_template('movie_reviews.html', user=user, movie=movie_data, reviews=movie_reviews)
-    else:
-        return render_template('404.html'), 404
+        user = data_manager.get_user(user_id)
+        movie_data = next((movie for movie in data_manager.get_user_movies(user_id) if movie["title"] == movie_title), None)
+        if movie_data:
+            movie_reviews = data_manager.get_comments(movie_data["title"])
+            return render_template('movie_reviews.html', user=user, movie=movie_data, reviews=movie_reviews)
+        else:
+            return render_template('404.html'), 404
+
+    except Exception as e:
+        error_message = str(e)
+        return render_template('error.html', error_message=error_message), 500
 
 @app.route('/users/<int:user_id>/movie_page/<int:movie_id>', methods=['GET', 'POST'])
 def movie_page(user_id, movie_id):
-    movies = data_manager.get_user_movies(user_id)
-    if movies is None:
-        return render_template('404.html'), 404
-    for movie in movies:
-        if movie["id"] == movie_id:
-            movie_title = movie['title']
-            movie['countries_img'] = data_manager.movie_countries(movie_id)
-            countries = data_manager.get_all_countries()
-            genres = data_manager.get_genre(movie_title)
-            return render_template('movie_page.html', user_id=user_id, movie=movie, genres=genres, countries=countries, data_manager=data_manager)
-    return render_template('404.html'), 404
-
-def reset_game():
-    global game_q, score, question, answer_choices
-    score = 0
-    game_q = 0
-    question, answer_choices = game.trivia_game().split('?')
-    question = question.strip()
-    answer_choices = answer_choices.strip().split("\n")
+    try:
+        movies = data_manager.get_user_movies(user_id)
+        if movies is None:
+            return render_template('404.html'), 404
+        selected_movie = None
+        for movie in movies:
+            if movie["id"] == movie_id:
+                selected_movie = movie
+                break
+        if selected_movie is None:
+            return render_template('404.html'), 404
+        selected_movie['countries_img'] = data_manager.movie_countries(movie_id)
+        countries = data_manager.get_all_countries()
+        genres = data_manager.get_genre(movie_id)
+        return render_template('movie_page.html', user_id=user_id, movie=selected_movie, genres=genres,
+                               countries=countries, data_manager=data_manager)
+    except Exception as e:
+        error_message = str(e)
+        return render_template('error.html', error_message=error_message), 500
 
 @app.route('/trivia_game/<int:user_id>', methods=['GET', 'POST'])
 def trivia_game(user_id):
-    global game_q, score, question, answer_choices
-    if game_q == 0:
-        reset_game()
-    return render_template('trivia_game.html', question=question, answers=answer_choices, user_id=user_id)
+    if game.game_q == 0:
+        game.reset_game()
+    return render_template('trivia_game.html', question=game.question, answers=game.answer_choices, user_id=user_id)
 
 @app.route('/check_answer/<int:user_id>', methods=['POST'])
 def check_answer(user_id):
-    global game_q, score, question, answer_choices
-    last_question = question
+    last_question = game.question
     user_answer = request.form.get('answer')
-    correct_answer = game.correct_answer(last_question)
-    is_correct = game.check(user_answer, correct_answer)
+    is_correct = game.check(last_question, user_answer)
     result = "Correct!" if is_correct else "Incorrect. Try again!"
     if is_correct:
-        score += 1
-    game_q += 1
-    if game_q == 5:
-        return render_template('end_game.html', score=score, game_q=game_q, user_id=user_id)
-    question, answer_choices = game.trivia_game().split('?')
-    question = question.strip()
-    answer_choices = answer_choices.strip().split("\n")
-    return render_template('trivia_game.html', question=question, answers=answer_choices, result=result, user_id=user_id)
+        game.score += 1
+    game.game_q += 1
+    if game.game_q == 5:
+        return render_template('end_game.html', score=game.score, game_q=game.game_q, user_id=user_id)
+    question_and_choices = game.trivia_game().split('?')
+    game.question = question_and_choices[0].strip()
+    game.answer_choices = question_and_choices[1].strip().split("\n")
+    return render_template('trivia_game.html', question=game.question, answers=game.answer_choices, result=result, user_id=user_id)
 
 if __name__ == "__main__":
     with app.app_context():

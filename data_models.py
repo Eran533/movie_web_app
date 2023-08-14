@@ -2,7 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
-class USER(db.Model):
+class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_name = db.Column(db.String(50), unique=True)
     password = db.Column(db.String(50), unique=True)
@@ -18,7 +18,7 @@ class USER(db.Model):
             'image': self.user_img,
         }
 
-class MOVIES(db.Model):
+class Movies(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     title = db.Column(db.String(50))
@@ -73,7 +73,7 @@ class Reviews(db.Model):
 
 class Genre(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    movie_title = db.Column(db.String(50))
+    movie_id = db.Column(db.Integer, db.ForeignKey('movies.id'), nullable=False)
     genre = db.Column(db.String(50))
 
     def to_dict(self):
