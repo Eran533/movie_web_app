@@ -1,6 +1,5 @@
 import ssl
 from flask import Flask, render_template, request, redirect, url_for
-from starlette.templating import Jinja2Templates
 from movie_web_app.data_models import db
 from movie_web_app.datamanager.SQLiteDataManager import SQLiteDataManager
 import os
@@ -11,7 +10,6 @@ from movie_web_app.game import TriviaGame
 import requests
 
 app = Flask(__name__)
-templates = Jinja2Templates(directory="templates")
 db_path = os.path.join(os.path.dirname(__file__), "datamanager", "moviwebapp.db")
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
 data_manager = SQLiteDataManager(app)
