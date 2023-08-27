@@ -296,7 +296,9 @@ def movie_user_reviews(user_id, movie_title):
                         'user_name': user['username'],
                         'rating': rating,
                         'comment': comment,
-                        'img': user['image']
+                        'img': user['image'],
+                        'likes': 0,
+                        'dislikes': 0,
                     }
                     data_manager.add_comment(comment_data, movie_title, user_id)
                     return redirect(url_for('movie_user_reviews', user_id=user_id, movie_title=movie_title))
@@ -306,7 +308,7 @@ def movie_user_reviews(user_id, movie_title):
         movie_data = next((movie for movie in data_manager.get_user_movies(user_id) if movie["title"] == movie_title), None)
         if movie_data:
             movie_reviews = data_manager.get_comments(movie_data["title"])
-            return render_template('movie_reviews.html', user=user, movie=movie_data, reviews=movie_reviews)
+            return render_template('movie_reviews.html', user_id=user_id, movie=movie_data, reviews=movie_reviews, user=user)
         else:
             return render_template('404.html'), 404
 
@@ -357,6 +359,36 @@ def check_answer(user_id):
     game.question = question_and_choices[0].strip()
     game.answer_choices = question_and_choices[1].strip().split("\n")
     return render_template('trivia_game.html', question=game.question, answers=game.answer_choices, result=result, user_id=user_id)
+
+@app.route('/users/<int:user_id>/like_review/<int:movie_id>/<int:review_id>', methods=['POST'])
+def like_review(user_id, movie_id, review_id):
+    users = data_manager.get_all_users()
+    movie_title = ""
+    for user in users:
+        if user["id"] == user_id:
+            movies = data_manager.get_user_movies(user_id)
+            for movie in movies:
+                if movie["id"] == movie_id:
+                    movie_title = movie["title"]
+                    data_manager.like_comment(movie["title"], review_id, user_id)
+                    break
+            break
+    return redirect(url_for('movie_user_reviews', user_id=user_id, movie_title=movie_title))
+
+@app.route('/users/<int:user_id>/dis_like_review/<int:movie_id>/<int:review_id>', methods=['POST'])
+def dis_like_review(user_id, movie_id, review_id):
+    users = data_manager.get_all_users()
+    movie_title = ""
+    for user in users:
+        if user["id"] == user_id:
+            movies = data_manager.get_user_movies(user_id)
+            for movie in movies:
+                if movie["id"] == movie_id:
+                    movie_title = movie["title"]
+                    data_manager.dislike_comment(movie["title"], review_id, user_id)
+                    break
+            break
+    return redirect(url_for('movie_user_reviews', user_id=user_id, movie_title=movie_title))
 
 if __name__ == "__main__":
     with app.app_context():

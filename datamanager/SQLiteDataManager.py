@@ -1,5 +1,5 @@
 from sqlalchemy.exc import SQLAlchemyError
-from movie_web_app.data_models import User, Movies, db, Countries, Reviews, Genre
+from movie_web_app.data_models import User, Movies, db, Countries, Reviews, Genre, UserReviewLikes, UserReviewDissLikes
 from movie_web_app.datamanager.dataManager_Interface import DataManagerInterface
 
 class SQLiteDataManager(DataManagerInterface):
@@ -124,7 +124,9 @@ class SQLiteDataManager(DataManagerInterface):
             user_name=comment_data['user_name'],
             rating=comment_data['rating'],
             comment=comment_data['comment'],
-            img=comment_data['img']
+            img=comment_data['img'],
+            likes=comment_data['likes'],
+            dislikes = comment_data['dislikes']
         )
         db.session.add(new_comment)
         db.session.commit()
@@ -133,11 +135,55 @@ class SQLiteDataManager(DataManagerInterface):
         movie_reviews = Reviews.query.filter_by(movie_title=movie_title).all()
         return [review.to_dict() for review in movie_reviews]
 
+    def like_comment(self, movie_title, review_id, user_id):
+        movie_reviews = Reviews.query.filter_by(movie_title=movie_title).all()
+        for movie_review in movie_reviews:
+            if movie_review.movie_title == movie_title and movie_review.id == review_id:
+                if not self.has_user_liked_review(user_id, review_id):
+                    movie_review.likes += 1
+                    new_like = UserReviewLikes(user_id=user_id, review_id=review_id)
+                    db.session.add(new_like)
+                    db.session.commit()
+                    return movie_review.to_dict()
+                else:
+                    movie_review.likes -= 1
+                    existing_like = UserReviewLikes.query.filter_by(user_id=user_id, review_id=review_id).first()
+                    if existing_like:
+                        db.session.delete(existing_like)
+                db.session.commit()
+                return movie_review.to_dict()
+        return None
+
+    def has_user_liked_review(self, user_id, review_id):
+        return UserReviewLikes.query.filter_by(user_id=user_id, review_id=review_id).first() is not None
+
+    def has_user_disliked_review(self, user_id, review_id):
+        return UserReviewDissLikes.query.filter_by(user_id=user_id, review_id=review_id).first() is not None
+
+    def dislike_comment(self, movie_title, review_id, user_id):
+        movie_reviews = Reviews.query.filter_by(movie_title=movie_title).all()
+        for movie_review in movie_reviews:
+            if movie_review.movie_title == movie_title and movie_review.id == review_id:
+                if not self.has_user_disliked_review(user_id, review_id):  # Use the new function
+                    movie_review.dislikes += 1
+                    new_dislike = UserReviewDissLikes(user_id=user_id, review_id=review_id)
+                    db.session.add(new_dislike)
+                    db.session.commit()
+                    return movie_review.to_dict()
+                else:
+                    movie_review.dislikes -= 1
+                    existing_dislike = UserReviewDissLikes.query.filter_by(user_id=user_id, review_id=review_id).first()
+                    if existing_dislike:
+                        db.session.delete(existing_dislike)
+                db.session.commit()
+                return movie_review.to_dict()
+        return None
+
     def add_genre(self, movie_id, genre_data):
         genre_list = genre_data['genre'].split(",")
         for genre in genre_list:
             new_genre = Genre(
-                movie_id=movie_id,  # Use the provided movie_id
+                movie_id=movie_id,
                 genre=genre
             )
             db.session.add(new_genre)

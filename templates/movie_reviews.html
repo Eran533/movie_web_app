@@ -128,7 +128,42 @@ form button:hover {
 form button:active {
   background-color: #222;
 }
+.like-button {
+    padding: 5px 10px;
+    background-color: #ccc;
+    color: #333;
+    border: none;
+    border-radius: 3px;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+    .like-button {
+    padding: 5px 10px;
+    background-color: #ccc;
+    color: #333;
+    border: none;
+    border-radius: 3px;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
 
+  .like-button:hover {
+    background-color: #ddd;
+  }
+
+  .like-button.active {
+    background-color: #ff6347;
+    color: #fff;
+  }
+
+  /* Add these styles for the emoji buttons */
+  .like-button.emoji-like {
+    background-color: #64dd17; /* Green color for like emoji */
+  }
+
+  .like-button.emoji-dislike {
+    background-color: #ff1744; /* Red color for dislike emoji */
+  }
   </style>
 </head>
 <body>
@@ -142,6 +177,14 @@ form button:active {
       <h2>{{ review["user_name"] }}</h2>
       <p>{{ review["rating"] }}</p>
       <p>{{ review["comment"] }}</p>
+      <p>{{ review["likes"] }} Likes</p>
+      <p>{{ review["dislikes"] }} Dislikes</p>
+      <form action="{{ url_for('like_review', user_id=user_id, movie_id=movie['id'], review_id=review['id']) }}" method="POST">
+      <button type="submit" class="like-button emoji-like">👍</button>
+    </form>
+    <form action="{{ url_for('dis_like_review', user_id=user_id, movie_id=movie['id'], review_id=review['id']) }}" method="POST">
+      <button type="submit" class="like-button emoji-dislike">👎</button>
+    </form>
     </section>
     {% endfor %}
   </main>

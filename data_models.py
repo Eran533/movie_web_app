@@ -62,13 +62,18 @@ class Reviews(db.Model):
     rating = db.Column(db.Float)
     comment = db.Column(db.String(255))
     img = db.Column(db.String(50))
+    likes = db.Column(db.Integer)
+    dislikes = db.Column(db.Integer)
 
     def to_dict(self):
         return {
+            'id': self.id,
             'user_name': self.user_name,
             'rating': self.rating,
             'comment': self.comment,
-            'img': self.img
+            'img': self.img,
+            'likes': self.likes,
+            'dislikes': self.dislikes
         }
 
 class Genre(db.Model):
@@ -80,3 +85,13 @@ class Genre(db.Model):
         return {
             'genre': self.genre
         }
+
+class UserReviewLikes(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    review_id = db.Column(db.Integer, db.ForeignKey('reviews.id'), nullable=False)
+
+class UserReviewDissLikes(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    review_id = db.Column(db.Integer, db.ForeignKey('reviews.id'), nullable=False)
