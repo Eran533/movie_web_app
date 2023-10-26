@@ -53,7 +53,7 @@ class SQLiteDataManager(DataManagerInterface):
                         country_img=country_img
                     )
                     db.session.add(new_country)
-                self.add_genre(new_movie.id, movie)  # Call the add_genre method with the movie_id and genre_data
+                self.add_genre(new_movie.id, movie)
             db.session.commit()
         except SQLAlchemyError as e:
             db.session.rollback()
@@ -134,6 +134,12 @@ class SQLiteDataManager(DataManagerInterface):
     def get_comments(self, movie_title):
         movie_reviews = Reviews.query.filter_by(movie_title=movie_title).all()
         return [review.to_dict() for review in movie_reviews]
+
+    def delete_comment(self, movie_title, user_id, review_id):
+        reviews_to_delete = Reviews.query.filter_by(movie_title=movie_title, user_id=user_id, id=review_id).all()
+        for review in reviews_to_delete:
+            db.session.delete(review)
+        db.session.commit()
 
     def like_comment(self, movie_title, review_id, user_id):
         movie_reviews = Reviews.query.filter_by(movie_title=movie_title).all()

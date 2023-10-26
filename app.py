@@ -88,7 +88,7 @@ def app_review(movie_title):
     }
     headers = {
         "content-type": "application/json",
-        "X-RapidAPI-Key": "234f5498c9msh8226e93fd4984d6p11b844jsn286c0f051d2e",
+        "X-RapidAPI-Key": "d73f442011msh63871ecf2dde8bap143fadjsne460c0fb111c",
         "X-RapidAPI-Host": "chatgpt-best-price.p.rapidapi.com"
     }
 
@@ -257,6 +257,22 @@ def app_review_movie(user_id, movie_id):
             break
     return redirect(url_for('user_movies', user_id=user_id))
 
+@app.route('/users/<int:user_id>/delete_review_movie/<int:movie_id>', methods=['POST'])
+def delete_review_movie(user_id, movie_id):
+    users = data_manager.get_all_users()
+    for user in users:
+        if user["id"] == user_id:
+            movies = data_manager.get_user_movies(user_id)
+            for movie in movies:
+                if movie["id"] == movie_id:
+                    title = movie["title"]
+                    review = ""
+                    movie_data = {"review": review}
+                    data_manager.movie_app_review(movie_id, movie_data)
+                    break
+            break
+    return redirect(url_for('user_movies', user_id=user_id))
+
 @app.route('/users/<int:user_id>/edit_profile', methods=['GET', 'POST'])
 def edit_profile(user_id):
     try:
@@ -315,6 +331,11 @@ def movie_user_reviews(user_id, movie_title):
     except Exception as e:
         error_message = str(e)
         return render_template('error.html', error_message=error_message), 500
+
+@app.route('/users/<int:user_id>/delete_review/<string:movie_title>/<int:review_id>', methods=['POST'])
+def delete_review(user_id, movie_title, review_id):
+    data_manager.delete_comment(movie_title, user_id, review_id)
+    return redirect(url_for('movie_user_reviews', user_id=user_id, movie_title=movie_title))
 
 @app.route('/users/<int:user_id>/movie_page/<int:movie_id>', methods=['GET', 'POST'])
 def movie_page(user_id, movie_id):

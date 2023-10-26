@@ -73,7 +73,8 @@ class Reviews(db.Model):
             'comment': self.comment,
             'img': self.img,
             'likes': self.likes,
-            'dislikes': self.dislikes
+            'dislikes': self.dislikes,
+            'user_id': self.user_id
         }
 
 class Genre(db.Model):

@@ -46,7 +46,12 @@
             <button class="add-movie-button" type="submit" onclick="submitReviewForm(event)">Movie app review!</button>
         </form>
         {% if movie.get('review') %}
+        <div class="movie-review">
             <p class="review-text">{{ movie['review'] }}</p>
+            <form action="{{ url_for('delete_review_movie', user_id=user_id, movie_id=movie['id']) }}" method="POST" id="delete-review-form">
+                <button class="close-review-button" onclick="closeReview(event)">Close review</button>
+            </form>
+        </div>
         {% endif %}
     </div>
     {% endfor %}
@@ -85,8 +90,6 @@
             localStorage.setItem('darkMode', 'disabled');
         }
     });
-
-    // Check user's preference on page load
     const userPreference = localStorage.getItem('darkMode');
     if (userPreference === 'enabled') {
         body.classList.add('dark-mode');

@@ -208,6 +208,16 @@ body.dark-mode {
     cursor: pointer;
     transition: background-color 0.3s;
 }
-
 .toggle-button:hover {
     background-color: #333333;
+    }
+.close-review-button {
+    background-color: #ff5555;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+.close-review-button:hover {
+    background-color: #ff0000;
+}

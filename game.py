@@ -20,7 +20,7 @@ class TriviaGame:
         }
         headers = {
             "content-type": "application/json",
-            "X-RapidAPI-Key": "234f5498c9msh8226e93fd4984d6p11b844jsn286c0f051d2e",
+            "X-RapidAPI-Key": "d73f442011msh63871ecf2dde8bap143fadjsne460c0fb111c",
             "X-RapidAPI-Host": "chatgpt-best-price.p.rapidapi.com"
         }
 
@@ -41,7 +41,7 @@ class TriviaGame:
         }
         headers = {
             "content-type": "application/json",
-            "X-RapidAPI-Key": "234f5498c9msh8226e93fd4984d6p11b844jsn286c0f051d2e",
+            "X-RapidAPI-Key": "d73f442011msh63871ecf2dde8bap143fadjsne460c0fb111c",
             "X-RapidAPI-Host": "chatgpt-best-price.p.rapidapi.com"
         }
 
@@ -49,6 +49,7 @@ class TriviaGame:
         return response.json()['choices'][0]['message']['content']
 
     def check(self, q, a):
+        print(self.correct_answer(q, a).lower())
         return "yes" in self.correct_answer(q, a).lower()
 
     def reset_game(self):

@@ -178,13 +178,19 @@ form button:active {
       <p>{{ review["rating"] }}</p>
       <p>{{ review["comment"] }}</p>
       <p>{{ review["likes"] }} Likes</p>
-      <p>{{ review["dislikes"] }} Dislikes</p>
       <form action="{{ url_for('like_review', user_id=user_id, movie_id=movie['id'], review_id=review['id']) }}" method="POST">
       <button type="submit" class="like-button emoji-like">👍</button>
     </form>
+      <p>{{ review["dislikes"] }} Dislikes</p>
     <form action="{{ url_for('dis_like_review', user_id=user_id, movie_id=movie['id'], review_id=review['id']) }}" method="POST">
       <button type="submit" class="like-button emoji-dislike">👎</button>
     </form>
+      <p></p>
+      {% if review['user_id'] == user['id'] %}
+      <form action="{{ url_for('delete_review', user_id=user_id, movie_title=movie['title'], review_id=review['id']) }}" method="POST">
+        <button type="submit" class="like-button">Delete Comment</button>
+      </form>
+      {% endif %}
     </section>
     {% endfor %}
   </main>
